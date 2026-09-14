@@ -8,6 +8,7 @@ struct HomeView: View {
 
     @State private var showingLedgerPicker = false
     @State private var showingSettings = false
+    @State private var showingCreateLedger = false
 
     var body: some View {
         ScrollView {
@@ -60,6 +61,9 @@ struct HomeView: View {
             if let ledger = model.currentLedger {
                 NavigationStack { LedgerSettingsView(ledger: ledger) }
             }
+        }
+        .sheet(isPresented: $showingCreateLedger) {
+            NavigationStack { CreateLedgerView() }
         }
         .refreshable {
             await model.refreshAll()
@@ -162,19 +166,27 @@ struct HomeView: View {
     // MARK: - Capture
 
     private var captureCard: some View {
-        Card(padding: 20) {
-            Button(action: onCapture) {
+        // Without a ledger there is nowhere to put an expense, but a greyed-out
+        // button with no explanation is a dead end. Instead the card becomes the
+        // way to get a ledger, so the primary action is never a no-op.
+        let hasLedger = model.currentLedger != nil
+        return Card(padding: 20) {
+            Button(action: captureTapped) {
                 HStack(spacing: 12) {
-                    Image(systemName: "mic.fill")
+                    Image(systemName: hasLedger ? "mic.fill" : "book.closed.fill")
                         .font(.system(size: 22, weight: .semibold))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("说一句话记账").font(.headline)
-                        Text("“我付了 500，我们三个人吃饭，平摊”")
+                        Text(hasLedger ? "说一句话记账" : "先创建一个账本")
+                            .font(.headline)
+                        Text(hasLedger ? "“我付了 500，我们三个人吃饭，平摊”" : "账目要放进账本里，点这里建一个就能开始记账")
                             .font(.caption)
                             .opacity(0.92)
                             .lineLimit(1)
                     }
                     Spacer()
+                    Image(systemName: hasLedger ? "mic" : "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .opacity(0.9)
                 }
                 .padding(.vertical, 16)
                 .padding(.horizontal, 18)
@@ -183,9 +195,15 @@ struct HomeView: View {
             .background(Theme.accent)
             .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .disabled(model.currentLedger == nil)
-            .opacity(model.currentLedger == nil ? 0.5 : 1)
             .accessibilityIdentifier("home.capture")
+        }
+    }
+
+    private func captureTapped() {
+        if model.currentLedger == nil {
+            showingCreateLedger = true
+        } else {
+            onCapture()
         }
     }
 

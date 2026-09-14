@@ -5,6 +5,7 @@ struct CreateLedgerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var created: Ledger?
+    @State private var showingJoin = false
 
     private let suggestions = ["我的日常", "家庭账本", "日本旅行", "公司出差"]
 
@@ -58,6 +59,15 @@ struct CreateLedgerView: View {
                 }
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || model.isBusy)
             }
+
+            Section {
+                Button {
+                    showingJoin = true
+                } label: {
+                    Label("已经有邀请码？改为加入别人的账本", systemImage: "rectangle.and.pencil.and.ellipsis")
+                        .font(.footnote)
+                }
+            }
         }
         .navigationTitle("创建账本")
         .navigationBarTitleDisplayMode(.inline)
@@ -65,6 +75,9 @@ struct CreateLedgerView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button(created == nil ? "取消" : "完成") { dismiss() }
             }
+        }
+        .sheet(isPresented: $showingJoin) {
+            NavigationStack { JoinLedgerView() }
         }
     }
 
