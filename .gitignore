@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+*.log
+.env
+.env.local
+
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+.swiftpm/
+Package.resolved
+
+# OS
+.DS_Store
+
+# Local runtime data
+server/data/
+*.sqlite
+*.sqlite-journal
