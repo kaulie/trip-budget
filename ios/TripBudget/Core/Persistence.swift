@@ -113,7 +113,21 @@ final class LocalStore {
     func wipeAll() {
         for id in ledgerIds() { removeLedger(id) }
         session = nil
+        serverURL = nil
         savePendingMutations([])
+    }
+
+    // MARK: - Server
+
+    /// A server address the user picked on this device.
+    ///
+    /// On a physical phone "localhost" means the phone itself, so the Mac that
+    /// runs the dev server has to be named by its LAN address. Baking that into
+    /// the build would be wrong the moment the Mac joins another Wi-Fi, so the
+    /// choice made in the app wins over everything else and sticks.
+    var serverURL: String? {
+        get { read(String.self, from: "server.json") }
+        set { write(newValue, to: "server.json") }
     }
 
     // MARK: - Outbox

@@ -74,7 +74,7 @@ actor APIClient {
         case delete = "DELETE"
     }
 
-    private let baseURL: URL
+    private var baseURL: URL
     private let session: URLSession
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
@@ -90,6 +90,16 @@ actor APIClient {
     }
 
     var currentToken: String? { token }
+
+    var currentBaseURL: URL { baseURL }
+
+    /// Point the client at another server (e.g. the Mac's LAN address when the
+    /// app runs on a phone). The token is kept: the same identity is valid on
+    /// whichever server the user points at.
+    func updateBaseURL(_ url: URL) {
+        guard url != baseURL else { return }
+        baseURL = url
+    }
 
     // MARK: - Transport
 

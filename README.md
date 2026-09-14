@@ -62,11 +62,34 @@ xcodegen generate           # 由 project.yml 生成 TripBudget.xcodeproj
 open TripBudget.xcodeproj   # 选 iPhone 模拟器，运行
 ```
 
-App 默认连 `http://127.0.0.1:4000`（模拟器可直接访问宿主机）。用真机调试时改成局域网地址：
+模拟器直接连 `http://127.0.0.1:4000`，不用配任何东西。
+
+#### 装到真机上（Xcode 直接 Run 就行）
+
+1. 手机用数据线连上 Mac，信任这台电脑；
+2. 打开 `TripBudget.xcodeproj`，在顶部把运行目标选成你的 iPhone；
+3. 按 Run。
+
+`project.yml` 里已经写好了 `DEVELOPMENT_TEAM`（个人开发者团队）和真机默认的服务器地址
+（`TRIP_BUDGET_API`，见下），所以正常情况下点 Run 就能装上，不需要手动选签名团队。
+
+关于「手机怎么找到你电脑上的后端」——真机上 `127.0.0.1` 指的是手机自己，所以必须用局域网地址：
+
+| 场景 | 地址从哪来 |
+| --- | --- |
+| 首次安装 | 构建时写进 Info.plist 的 `TRIP_BUDGET_API`（`project.yml`，当前是 `http://192.168.3.84:4000`） |
+| 之后换了 Wi-Fi / 换了电脑 | App 里改：**账本 → 我 → 服务器地址**，填 `192.168.1.20:4000` 这种，点「保存并重连」即可，不用重装 |
+| 临时调试 | Xcode → Edit Scheme → Run → Arguments → Environment Variables 里设 `TRIP_BUDGET_API` |
+
+优先级：App 里设置的 > 环境变量 > Info.plist > 回环地址。
+
+前提是手机和电脑在同一个 Wi-Fi 下，且后端监听 `0.0.0.0`（默认就是）。
+第一次连的时候 iOS 会弹「本地网络」权限，允许即可。
+
+想用命令行装也可以用脚本（会自动探测手机、算出本机局域网地址）：
 
 ```bash
-# Xcode → Edit Scheme → Run → Arguments → Environment Variables
-TRIP_BUDGET_API = http://192.168.x.x:4000
+cd ios && ./scripts/run-on-device.sh
 ```
 
 ### 3. AI 是可选的，不是必需的

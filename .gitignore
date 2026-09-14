@@ -26,4 +26,6 @@ server/data/
 # project opens without extra tooling.
 # (TripBudget.xcodeproj IS tracked on purpose.)
 ios/build/
+ios/build-device/
+ios/build-device2/
 ios/DerivedData/

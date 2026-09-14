@@ -98,7 +98,20 @@ cd ios && xcodebuild test -project TripBudget.xcodeproj -scheme TripBudget \
 > 语音识别在模拟器上不可用（系统限制），所以 UI 测试走的是**同一句话的文本入口**；
 > 真机上点麦克风即走 `SFSpeechRecognizer`。两条路进入的是同一个 Agent 接口。
 
-## 6. 已知限制
+## 6. iOS：真机安装（本次改动的验证）
+
+| 验证项 | 命令 | 结果 |
+| --- | --- | --- |
+| 真机 SDK 编译 | `xcodebuild -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO` | BUILD SUCCEEDED |
+| 真机签名打包 | `xcodebuild -destination 'platform=iOS,id=<UDID>' -allowProvisioningUpdates build` | BUILD SUCCEEDED（`com.gaolei.tripbudget`，Team `JD4B775BJ5`） |
+| iOS 单元测试 | `xcodebuild test -only-testing:TripBudgetTests` | 14 passed |
+| iOS 端到端 UI | `xcodebuild test -only-testing:TripBudgetUITests` | 2 passed（124s） |
+
+真机要解决的是「手机上的 127.0.0.1 是手机自己」。构建时写进 Info.plist 的
+`TRIP_BUDGET_API` 只是首次运行的默认值；装上之后以 App 里
+「账本 → 我 → 服务器地址」设置的为准（存在设备本地），所以换了 Wi-Fi 不需要重新安装。
+
+## 7. 已知限制
 
 - 模拟器没有语音识别与麦克风输入，语音路径需要在真机验证；App 已做了完整的降级
   （识别不可用时提示并切到文本输入，功能不缺失）。
@@ -106,3 +119,5 @@ cd ios && xcodebuild test -project TripBudget.xcodeproj -scheme TripBudget \
 - 匿名身份以 `deviceId` 为凭证，同一台设备重装后是同一个身份；这是 MVP 的取舍，
   正式账号体系的扩展点见 `docs/ARCHITECTURE.md`。
 - 第一阶段没有实现真正的「还钱/结清」，只输出结算建议；数据模型已经支持。
+- 真机用的是个人开发者团队（免费签名），证书 7 天过期、每台设备最多 3 个自签 App；
+  过期后重新用 Xcode Run 一次即可。
