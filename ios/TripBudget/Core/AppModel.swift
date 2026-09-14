@@ -36,28 +36,96 @@ final class AppModel {
     var errorMessage: String?
     var infoMessage: String?
 
-    private let api: APIClient
+    private var api: APIClient
     private let store: LocalStore
     private var cursor = 0
     private var token: String?
 
+    /// The address the app is talking to right now (see `defaultBaseURL`).
+    private(set) var baseURL: URL
+
     init(api: APIClient? = nil, store: LocalStore = LocalStore()) {
-        self.api = api ?? APIClient(baseURL: AppModel.defaultBaseURL)
         self.store = store
+        let base = AppModel.resolvedBaseURL(store: store)
+        self.baseURL = base
+        self.api = api ?? APIClient(baseURL: base)
         // UI tests need a deterministic first-run experience.
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
             self.store.wipeAll()
         }
     }
 
-    /// Points at the dev server on the same machine as the Simulator. Override
-    /// with the `TRIP_BUDGET_API` environment variable to test against a device
-    /// on the LAN.
+    /// Where the API lives.
+    ///
+    /// Resolution order:
+    ///   1. the address the user typed in the app (stored on the device) — this
+    ///      is what makes a phone work on any Wi-Fi without a rebuild;
+    ///   2. `TRIP_BUDGET_API` environment variable — set by the Xcode scheme, or
+    ///      by `devicectl device process launch --environment`;
+    ///   3. `TRIP_BUDGET_API` in Info.plist — baked at build time for a device
+    ///      build, where "localhost" would mean the phone itself;
+    ///   4. Loopback, which is what the Simulator needs.
     static var defaultBaseURL: URL {
-        if let raw = ProcessInfo.processInfo.environment["TRIP_BUDGET_API"], let url = URL(string: raw) {
+        if let raw = ProcessInfo.processInfo.environment["TRIP_BUDGET_API"],
+           let url = URL(string: raw) {
+            return url
+        }
+        #if targetEnvironment(simulator)
+        // The Simulator shares the Mac's network stack, so loopback is right and
+        // a LAN address baked for a device would only add a way to break the
+        // machine that does not need it.
+        return URL(string: "http://127.0.0.1:4000")!
+        #else
+        if let raw = Bundle.main.object(forInfoDictionaryKey: "TRIP_BUDGET_API") as? String,
+           !raw.trimmingCharacters(in: .whitespaces).isEmpty,
+           let url = URL(string: raw) {
             return url
         }
         return URL(string: "http://127.0.0.1:4000")!
+        #endif
+    }
+
+    /// The device's own choice wins over everything a build could bake in.
+    static func resolvedBaseURL(store: LocalStore) -> URL {
+        if let raw = store.serverURL,
+           let url = normalizedBaseURL(raw) {
+            return url
+        }
+        return defaultBaseURL
+    }
+
+    /// Accepts what a person actually types ("192.168.1.20:4000") as well as a
+    /// full URL, and refuses anything that is not an http(s) address.
+    static func normalizedBaseURL(_ raw: String) -> URL? {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        if !text.lowercased().hasPrefix("http://") && !text.lowercased().hasPrefix("https://") {
+            text = "http://" + text
+        }
+        guard var components = URLComponents(string: text),
+              let scheme = components.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = components.host, !host.isEmpty else {
+            return nil
+        }
+        while components.path.hasSuffix("/") { components.path = String(components.path.dropLast()) }
+        return components.url
+    }
+
+    /// Point the app at a different server and reconnect. This is how a phone
+    /// stops talking to itself and starts talking to the Mac on the same Wi-Fi.
+    @discardableResult
+    func updateServerURL(_ raw: String) async -> Bool {
+        guard let url = AppModel.normalizedBaseURL(raw) else {
+            errorMessage = "服务器地址要写成主机:端口，例如 192.168.1.20:4000"
+            return false
+        }
+        store.serverURL = url.absoluteString
+        baseURL = url
+        await api.updateBaseURL(url)
+        infoMessage = "已切换到 \(url.absoluteString)"
+        await refreshAll()
+        return true
     }
 
     // MARK: - Derived
@@ -112,6 +180,7 @@ final class AppModel {
 
     /// Restore identity and the last known ledger from disk, then refresh.
     func bootstrap() async {
+        await observeReachability()
         deviceId = store.session?.deviceId ?? Self.persistedDeviceId()
         pendingMutations = store.pendingMutations()
 
@@ -131,6 +200,15 @@ final class AppModel {
 
         phase = .ready
         await refreshAll()
+    }
+
+    /// Connectivity comes from the transport, not from whichever call site
+    /// remembered to update it: a request that answers means online, a request
+    /// that never leaves the device means offline.
+    private func observeReachability() async {
+        await api.setReachabilityHandler { [weak self] online in
+            await MainActor.run { self?.isOffline = !online }
+        }
     }
 
     private static func persistedDeviceId() -> String {
@@ -351,7 +429,12 @@ final class AppModel {
     /// and it is what makes a second device see the first one's expenses without
     /// anyone pressing refresh.
     func sync() async {
-        guard let ledgerId = currentLedgerId else { return }
+        guard let ledgerId = currentLedgerId else {
+            // Nothing to pull yet — but "立即同步" is also the retry button, so
+            // re-read the ledger list instead of silently doing nothing.
+            await refreshAll()
+            return
+        }
         do {
             var changes = try await api.changes(ledgerId: ledgerId, since: cursor)
             merge(changes)

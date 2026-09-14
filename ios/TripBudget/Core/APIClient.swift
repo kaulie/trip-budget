@@ -74,15 +74,24 @@ actor APIClient {
         case delete = "DELETE"
     }
 
-    private let baseURL: URL
+    private var baseURL: URL
     private let session: URLSession
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
     private var token: String?
 
+    /// Told `true` whenever the server answers at all (even with 4xx/5xx) and
+    /// `false` when the request never left the device. Reporting it here means
+    /// "online" is decided in one place instead of by every call site.
+    private var reachability: (@Sendable (Bool) async -> Void)?
+
     init(baseURL: URL, session: URLSession = .shared) {
         self.baseURL = baseURL
         self.session = session
+    }
+
+    func setReachabilityHandler(_ handler: (@Sendable (Bool) async -> Void)?) {
+        reachability = handler
     }
 
     func setToken(_ token: String?) {
@@ -90,6 +99,16 @@ actor APIClient {
     }
 
     var currentToken: String? { token }
+
+    var currentBaseURL: URL { baseURL }
+
+    /// Point the client at another server (e.g. the Mac's LAN address when the
+    /// app runs on a phone). The token is kept: the same identity is valid on
+    /// whichever server the user points at.
+    func updateBaseURL(_ url: URL) {
+        guard url != baseURL else { return }
+        baseURL = url
+    }
 
     // MARK: - Transport
 
@@ -156,8 +175,13 @@ actor APIClient {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
+            // Nothing came back at all: wrong address, no Wi-Fi, or the local
+            // network permission was refused. The status code below cannot be
+            // reached in that case, so it is the only real "offline" signal.
+            await reachability?(false)
             throw APIError.transport(error.localizedDescription)
         }
+        await reachability?(true)
 
         guard let http = response as? HTTPURLResponse else {
             throw APIError.transport("no HTTP response")

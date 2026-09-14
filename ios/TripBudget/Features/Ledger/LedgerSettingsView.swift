@@ -111,6 +111,7 @@ struct ProfileView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var nickname = ""
+    @State private var serverURL = ""
 
     var body: some View {
         Form {
@@ -122,10 +123,33 @@ struct ProfileView: View {
                 Text("昵称用于在共享账本里区分成员。重名时记账助手不会猜，会先问你。")
             }
 
+            Section {
+                TextField("http://192.168.1.20:4000", text: $serverURL)
+                    .font(.callout.monospaced())
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                HStack {
+                    Button("保存并重连") {
+                        Task {
+                            await model.updateServerURL(serverURL)
+                            serverURL = model.baseURL.absoluteString
+                        }
+                    }
+                    .disabled(serverURL.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Spacer()
+                    connectionBadge
+                }
+            } header: {
+                Text("服务器地址")
+            } footer: {
+                Text("模拟器用 127.0.0.1:4000；真机上「本机」是手机自己，要填运行后端那台电脑的局域网地址（手机和电脑连同一个 Wi-Fi）。换 Wi-Fi 后地址变了，在这里改一次就行，不用重新装。")
+            }
+
             Section("关于") {
                 LabeledContent("版本", value: "0.1.0 MVP")
                 LabeledContent("登录方式", value: "本机匿名身份")
-                LabeledContent("服务器", value: AppModel.defaultBaseURL.absoluteString)
+                LabeledContent("当前连接", value: model.baseURL.absoluteString)
                 if let last = model.lastSyncedAt {
                     LabeledContent("上次同步", value: last.formatted(date: .omitted, time: .standard))
                 }
@@ -148,6 +172,24 @@ struct ProfileView: View {
                 Button("关闭") { dismiss() }
             }
         }
-        .onAppear { nickname = model.user?.nickname ?? "" }
+        .onAppear {
+            nickname = model.user?.nickname ?? ""
+            serverURL = model.baseURL.absoluteString
+        }
+    }
+
+    @ViewBuilder
+    private var connectionBadge: some View {
+        if model.isBusy {
+            ProgressView()
+        } else if model.isOffline {
+            Label("连不上", systemImage: "wifi.slash")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        } else {
+            Label("正常", systemImage: "checkmark.circle")
+                .font(.footnote)
+                .foregroundStyle(Theme.accent)
+        }
     }
 }

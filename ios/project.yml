@@ -15,7 +15,10 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     SWIFT_STRICT_CONCURRENCY: minimal
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""
+    # Personal team (gaolei0811@gmail.com). Set so that opening the project and
+    # pressing Run on a phone works without picking a team by hand; change it to
+    # your own team in Xcode → Signing & Capabilities if you fork this.
+    DEVELOPMENT_TEAM: "JD4B775BJ5"
 
 targets:
   TripBudget:
@@ -23,21 +26,39 @@ targets:
     platform: iOS
     sources:
       - path: TripBudget
+    # A real Info.plist is needed for two things a generated one cannot express:
+    # App Transport Security for talking to the dev server on the LAN, and the
+    # local-network usage description (iOS 14+ blocks LAN access without it).
+    info:
+      path: TripBudget/Info.plist
+      properties:
+        CFBundleDisplayName: 共享记账
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSMicrophoneUsageDescription: 需要用麦克风把你说的话变成账目。
+        NSSpeechRecognitionUsageDescription: 需要语音识别权限，才能听懂你说了多少钱、谁付的钱。
+        NSLocalNetworkUsageDescription: 需要访问局域网，才能连上你电脑上运行的记账服务。
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # The dev server address baked into a *device* build (the Simulator
+        # ignores this and uses 127.0.0.1). It is only a first-run default: once
+        # the app has been opened on the phone, the address set in
+        # 「账本 → 我 → 服务器地址」 wins, so changing Wi-Fi never needs a rebuild.
+        TRIP_BUDGET_API: "http://192.168.3.84:4000"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tripbudget.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.gaolei.tripbudget
         PRODUCT_NAME: TripBudget
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: 共享记账
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: 需要用麦克风把你说的话变成账目。
-        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 需要语音识别权限，才能听懂你说了多少钱、谁付的钱。
+        GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_EMIT_LOC_STRINGS: YES
@@ -51,7 +72,7 @@ targets:
       - target: TripBudget
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tripbudget.app.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.gaolei.tripbudget.tests
         GENERATE_INFOPLIST_FILE: YES
 
   TripBudgetUITests:
@@ -63,7 +84,7 @@ targets:
       - target: TripBudget
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tripbudget.app.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.gaolei.tripbudget.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: TripBudget
 

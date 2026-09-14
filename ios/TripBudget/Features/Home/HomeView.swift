@@ -51,7 +51,6 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
-                .disabled(model.currentLedger == nil)
             }
         }
         .sheet(isPresented: $showingLedgerPicker) {
@@ -92,16 +91,22 @@ struct HomeView: View {
     private var offlineStrip: some View {
         Group {
             if model.isOffline {
-                HStack(spacing: 6) {
-                    Image(systemName: "wifi.slash")
-                    Text("离线状态，改动会在联网后自动同步")
+                Button {
+                    Task { await model.refreshAll() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "wifi.slash")
+                        Text("离线状态，点一下重试")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.thinMaterial)
+                    .clipShape(Capsule())
+                    .padding(.top, 4)
                 }
-                .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.thinMaterial)
-                .clipShape(Capsule())
-                .padding(.top, 4)
+                .buttonStyle(.plain)
+                .foregroundStyle(.primary)
             }
         }
     }
