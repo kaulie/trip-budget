@@ -180,6 +180,7 @@ final class AppModel {
 
     /// Restore identity and the last known ledger from disk, then refresh.
     func bootstrap() async {
+        await observeReachability()
         deviceId = store.session?.deviceId ?? Self.persistedDeviceId()
         pendingMutations = store.pendingMutations()
 
@@ -199,6 +200,15 @@ final class AppModel {
 
         phase = .ready
         await refreshAll()
+    }
+
+    /// Connectivity comes from the transport, not from whichever call site
+    /// remembered to update it: a request that answers means online, a request
+    /// that never leaves the device means offline.
+    private func observeReachability() async {
+        await api.setReachabilityHandler { [weak self] online in
+            await MainActor.run { self?.isOffline = !online }
+        }
     }
 
     private static func persistedDeviceId() -> String {
@@ -419,7 +429,12 @@ final class AppModel {
     /// and it is what makes a second device see the first one's expenses without
     /// anyone pressing refresh.
     func sync() async {
-        guard let ledgerId = currentLedgerId else { return }
+        guard let ledgerId = currentLedgerId else {
+            // Nothing to pull yet — but "立即同步" is also the retry button, so
+            // re-read the ledger list instead of silently doing nothing.
+            await refreshAll()
+            return
+        }
         do {
             var changes = try await api.changes(ledgerId: ledgerId, since: cursor)
             merge(changes)

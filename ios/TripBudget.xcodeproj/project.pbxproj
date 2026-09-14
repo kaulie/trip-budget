@@ -16,6 +16,7 @@
 		4EF93778464ED7C76A1A51DC /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15752DADA6718AD7E7CECAEF /* APIClient.swift */; };
 		54D39546404F017CF7F69CEF /* ConfirmExpenseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DB3829CF56DBBF9EAB6BA9 /* ConfirmExpenseView.swift */; };
 		5845DFC74B4AEF1A867177F0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C818C39901BD0D07D84884 /* OnboardingView.swift */; };
+		61C90739D797667CF53CCD11 /* ReachabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63FD0365A4372CCF499D68A3 /* ReachabilityTests.swift */; };
 		6290A2C16750C2E5851E898C /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 094AA329E817843C7EC2A3F5 /* AppModel.swift */; };
 		6FA80238301DF1092B8D5E28 /* ExpenseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B77466A207D8A747C0C79940 /* ExpenseListView.swift */; };
 		74C7CDDCF6202E4CFC28F259 /* ExpenseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D48EBD7214429199CC3A5 /* ExpenseDetailView.swift */; };
@@ -69,6 +70,7 @@
 		5B9D0E4AD466C724BA43596C /* EndToEndFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndToEndFlowTests.swift; sourceTree = "<group>"; };
 		5F757D75B4ADE7697949945B /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		5F8E0A0BA39CA708841F8FAB /* LedgerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerListView.swift; sourceTree = "<group>"; };
+		63FD0365A4372CCF499D68A3 /* ReachabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReachabilityTests.swift; sourceTree = "<group>"; };
 		71B0D8919ECCAF459211C057 /* ExpenseEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpenseEditorView.swift; sourceTree = "<group>"; };
 		7250500A43C5EFE4678DC781 /* LedgerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerSettingsView.swift; sourceTree = "<group>"; };
 		7781F1379FA9C33F6C94E6C6 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				2320F4962745A5BEC0CF2B90 /* DecodingTests.swift */,
 				F913F063F14288EC3C13190A /* LocalStoreTests.swift */,
 				DA7CCA5D79C85FBB9C102A4D /* MoneyTests.swift */,
+				63FD0365A4372CCF499D68A3 /* ReachabilityTests.swift */,
 			);
 			path = TripBudgetTests;
 			sourceTree = "<group>";
@@ -361,6 +364,7 @@
 				2839D30724F2380C5A6A9CB5 /* DecodingTests.swift in Sources */,
 				D802ED8FE50E84E480CE2EFD /* LocalStoreTests.swift in Sources */,
 				8E5E845F140CAAEB08310775 /* MoneyTests.swift in Sources */,
+				61C90739D797667CF53CCD11 /* ReachabilityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

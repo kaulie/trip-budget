@@ -59,9 +59,10 @@ cd ios && xcodebuild test -project TripBudget.xcodeproj -scheme TripBudget \
   -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:TripBudgetTests
 ```
 
-`Executed 14 tests, with 0 failures`：客户端金额格式化/解析、**与后端一致的
+`Executed 17 tests, with 0 failures`：客户端金额格式化/解析、**与后端一致的
 最大余额法分摊**（含 500/3 = 167/167/166）、Server 响应解码（就绪 / 追问 / 统计）、
-本地缓存与离线队列往返、账目排序。
+本地缓存与离线队列往返、账目排序，以及**连通性判定**（收到响应 = 在线，
+请求根本没发出去 = 离线；4xx/5xx 仍算在线）。
 
 ## 5. iOS：端到端 UI 测试（真实后端 + 真实多设备）
 
@@ -104,7 +105,7 @@ cd ios && xcodebuild test -project TripBudget.xcodeproj -scheme TripBudget \
 | --- | --- | --- |
 | 真机 SDK 编译 | `xcodebuild -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO` | BUILD SUCCEEDED |
 | 真机签名打包 | `xcodebuild -destination 'platform=iOS,id=<UDID>' -allowProvisioningUpdates build` | BUILD SUCCEEDED（`com.gaolei.tripbudget`，Team `JD4B775BJ5`） |
-| iOS 单元测试 | `xcodebuild test -only-testing:TripBudgetTests` | 14 passed |
+| iOS 单元测试 | `xcodebuild test -only-testing:TripBudgetTests` | 17 passed |
 | iOS 端到端 UI | `xcodebuild test -only-testing:TripBudgetUITests` | 2 passed（124s） |
 
 真机要解决的是「手机上的 127.0.0.1 是手机自己」。构建时写进 Info.plist 的
